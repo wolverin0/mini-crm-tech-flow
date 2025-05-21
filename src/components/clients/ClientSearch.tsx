@@ -65,6 +65,7 @@ const ClientSearch = ({
             className="ml-auto"
             onClick={() => setIsCommandOpen(true)}
             disabled={disabled}
+            type="button"
           >
             Cambiar
           </Button>
@@ -75,6 +76,7 @@ const ClientSearch = ({
           className="w-full justify-start"
           onClick={() => setIsCommandOpen(true)}
           disabled={disabled}
+          type="button"
         >
           <Search className="mr-2 h-4 w-4" />
           {buttonText}
@@ -105,6 +107,7 @@ const ClientSearch = ({
                       setIsCommandOpen(false);
                       setIsCreateDialogOpen(true);
                     }}
+                    type="button"
                   >
                     <UserPlus className="mr-2 h-4 w-4" />
                     Crear Nuevo Cliente
@@ -140,6 +143,7 @@ const ClientSearch = ({
                   setIsCommandOpen(false);
                   setIsCreateDialogOpen(true);
                 }}
+                type="button"
               >
                 <UserPlus className="mr-2 h-4 w-4" />
                 Crear Nuevo Cliente
