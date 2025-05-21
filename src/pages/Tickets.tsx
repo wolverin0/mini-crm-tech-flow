@@ -1,28 +1,46 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import PageHeader from "@/components/layout/PageHeader";
 import { toast } from "sonner";
-import { getOrders } from "@/services/repairOrderService"; // Fixed: use getOrders instead of getRepairOrders
+import { getOrders, updateOrder } from "@/services/repairOrderService"; // Fixed: use getOrders instead of getRepairOrders, Added updateOrder
 import { format } from "date-fns";
-import { Calendar, Clock, Ticket, Filter, Plus, Search, ArrowUpDown, Loader2 } from "lucide-react";
+import { Calendar, MoreHorizontal, Ticket, Filter, Plus, Search, Loader2 } from "lucide-react"; // Removed ArrowUpDown
 import { getClients } from "@/services/clientService";
 import ClientSearch from "@/components/clients/ClientSearch";
 import { Client } from "@/types";
+
+const TICKET_STATUSES = [
+  "Ingresado",
+  "En Diagnóstico",
+  "Esperando repuesto",
+  "Esperando aprobación",
+  "Reparado", // Changed from "Finalizado" to "Reparado" to match the dropdown options
+  "Entregado",
+  "No reparado/Cancelado" // Changed from "Cancelado" to "No reparado/Cancelado"
+];
 
 const Tickets = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null); // For disabling dropdown during update
   const [formData, setFormData] = useState({
     equipment_type: "",
     equipment_brand: "",
@@ -35,6 +53,22 @@ const Tickets = () => {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["repair_orders"],
     queryFn: getOrders
+  });
+
+  const queryClient = useQueryClient();
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ orderId, newStatus }: { orderId: string, newStatus: string }) => 
+      updateOrder(orderId, { status: newStatus }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["repair_orders"] });
+      toast.success("Estado del ticket actualizado");
+      setUpdatingOrderId(null);
+    },
+    onError: (error) => {
+      toast.error(`Error al actualizar el estado: ${error.message}`);
+      setUpdatingOrderId(null);
+    },
   });
 
   const { data: clients = [] } = useQuery({
@@ -66,16 +100,21 @@ const Tickets = () => {
         return <Badge className="bg-blue-500">Ingresado</Badge>;
       case "En Diagnóstico":
         return <Badge className="bg-purple-500">En Diagnóstico</Badge>;
-      case "En Reparación":
+      case "En Reparación": // This status is in the original getStatusBadge but not in TICKET_STATUSES, will keep for now
         return <Badge className="bg-yellow-500 text-black">En Reparación</Badge>;
-      case "Finalizado":
-        return <Badge className="bg-green-500">Finalizado</Badge>;
+      case "Reparado": // "Finalizado" was changed to "Reparado" in TICKET_STATUSES
+        return <Badge className="bg-green-500">Reparado</Badge>;
       case "Entregado":
         return <Badge className="bg-gray-500">Entregado</Badge>;
-      case "Cancelado":
-        return <Badge className="bg-red-500">Cancelado</Badge>;
+      case "No reparado/Cancelado": // "Cancelado" was changed to "No reparado/Cancelado"
+        return <Badge className="bg-red-500">No reparado/Cancelado</Badge>;
+      // Adding cases for the new statuses from TICKET_STATUSES
+      case "Esperando repuesto":
+        return <Badge className="bg-orange-500">Esperando repuesto</Badge>;
+      case "Esperando aprobación":
+        return <Badge className="bg-sky-500">Esperando aprobación</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>; // Default badge style
     }
   };
 
@@ -284,7 +323,41 @@ const Tickets = () => {
                           <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                           {format(new Date(order.entry_date), 'dd/MM/yyyy')}
                         </div>
-                        <div className="col-span-2">{getStatusBadge(order.status)}</div>
+                        <div className="col-span-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="w-full justify-between">
+                                {getStatusBadge(order.status)}
+                                <MoreHorizontal className="ml-2 h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuRadioGroup
+                                value={order.status}
+                                onValueChange={(newStatus) => {
+                                  if (order.id) {
+                                    setUpdatingOrderId(order.id);
+                                    updateStatusMutation.mutate({ orderId: order.id, newStatus });
+                                  }
+                                }}
+                                disabled={updateStatusMutation.isPending && updatingOrderId === order.id}
+                              >
+                                {TICKET_STATUSES.map((status) => (
+                                  <DropdownMenuRadioItem 
+                                    key={status} 
+                                    value={status}
+                                    disabled={updateStatusMutation.isPending && updatingOrderId === order.id}
+                                  >
+                                    {status}
+                                    {(updateStatusMutation.isPending && updatingOrderId === order.id && order.status === status) && 
+                                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                                    }
+                                  </DropdownMenuRadioItem>
+                                ))}
+                              </DropdownMenuRadioGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                     ))}
                   </div>
