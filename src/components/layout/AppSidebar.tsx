@@ -29,6 +29,7 @@ export const AppSidebar = ({ collapsed, toggleSidebar }: { collapsed: boolean, t
     { name: "Proveedores", path: "/proveedores", icon: Truck },
     { name: "Facturación", path: "/facturacion", icon: FileText },
     { name: "Cuentas", path: "/cuentas", icon: CreditCard },
+    { name: "Reportes", path: "/reportes", icon: FileText },
     { name: "Configuración", path: "/configuracion", icon: Settings },
   ];
 
