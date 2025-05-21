@@ -92,7 +92,7 @@ const RepairOrderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Repa
           </Select>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 md:col-span-2">
           <Label htmlFor="equipment_type">Tipo de Equipo *</Label>
           <Input
             id="equipment_type"
@@ -104,37 +104,40 @@ const RepairOrderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Repa
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="equipment_brand">Marca</Label>
-          <Input
-            id="equipment_brand"
-            name="equipment_brand"
-            value={formData.equipment_brand || ''}
-            onChange={handleChange}
-            placeholder="HP, Dell, Samsung, etc."
-          />
-        </div>
+        {/* Row for Marca, Modelo, Numero de Serie */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
+          <div className="space-y-2">
+            <Label htmlFor="equipment_brand">Marca</Label>
+            <Input
+              id="equipment_brand"
+              name="equipment_brand"
+              value={formData.equipment_brand || ''}
+              onChange={handleChange}
+              placeholder="HP, Dell, Samsung, etc."
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="equipment_model">Modelo</Label>
-          <Input
-            id="equipment_model"
-            name="equipment_model"
-            value={formData.equipment_model || ''}
-            onChange={handleChange}
-            placeholder="Modelo del equipo"
-          />
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="equipment_model">Modelo</Label>
+            <Input
+              id="equipment_model"
+              name="equipment_model"
+              value={formData.equipment_model || ''}
+              onChange={handleChange}
+              placeholder="Modelo del equipo"
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="serial_number">Número de Serie</Label>
-          <Input
-            id="serial_number"
-            name="serial_number"
-            value={formData.serial_number || ''}
-            onChange={handleChange}
-            placeholder="Número de serie o identificación"
-          />
+          <div className="space-y-2">
+            <Label htmlFor="serial_number">Número de Serie</Label>
+            <Input
+              id="serial_number"
+              name="serial_number"
+              value={formData.serial_number || ''}
+              onChange={handleChange}
+              placeholder="Número de serie o identificación"
+            />
+          </div>
         </div>
 
         <div className="space-y-2 md:col-span-2">
@@ -151,43 +154,46 @@ const RepairOrderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Repa
 
         {initialData?.id && (
           <>
-            <div className="space-y-2">
-              <Label htmlFor="status">Estado</Label>
-              <Select
-                value={formData.status || 'Ingresado'}
-                onValueChange={(value) => handleSelectChange('status', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione un estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((status) => (
-                    <SelectItem key={status} value={status}>{status}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Row for Estado, Tecnico Asignado, Fecha Estimada de Entrega */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
+              <div className="space-y-2">
+                <Label htmlFor="status">Estado</Label>
+                <Select
+                  value={formData.status || 'Ingresado'}
+                  onValueChange={(value) => handleSelectChange('status', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione un estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((status) => (
+                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="assigned_technician">Técnico Asignado</Label>
-              <Input
-                id="assigned_technician"
-                name="assigned_technician"
-                value={formData.assigned_technician || ''}
-                onChange={handleChange}
-                placeholder="Nombre del técnico"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="assigned_technician">Técnico Asignado</Label>
+                <Input
+                  id="assigned_technician"
+                  name="assigned_technician"
+                  value={formData.assigned_technician || ''}
+                  onChange={handleChange}
+                  placeholder="Nombre del técnico"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="estimated_delivery_date">Fecha Estimada de Entrega</Label>
-              <Input
-                id="estimated_delivery_date"
-                name="estimated_delivery_date"
-                type="date"
-                value={formData.estimated_delivery_date || ''}
-                onChange={handleChange}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="estimated_delivery_date">Fecha Estimada de Entrega</Label>
+                <Input
+                  id="estimated_delivery_date"
+                  name="estimated_delivery_date"
+                  type="date"
+                  value={formData.estimated_delivery_date || ''}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
             <div className="space-y-2 md:col-span-2">
@@ -202,30 +208,33 @@ const RepairOrderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Repa
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="budget">Presupuesto</Label>
-              <Input
-                id="budget"
-                name="budget"
-                type="number"
-                step="0.01"
-                value={formData.budget === undefined ? '' : formData.budget}
-                onChange={handleNumberChange}
-                placeholder="Presupuesto total"
-              />
-            </div>
+            {/* Row for Presupuesto, Costo de Mano de Obra */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+              <div className="space-y-2">
+                <Label htmlFor="budget">Presupuesto</Label>
+                <Input
+                  id="budget"
+                  name="budget"
+                  type="number"
+                  step="0.01"
+                  value={formData.budget === undefined ? '' : formData.budget}
+                  onChange={handleNumberChange}
+                  placeholder="Presupuesto total"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="labor_cost">Costo de Mano de Obra</Label>
-              <Input
-                id="labor_cost"
-                name="labor_cost"
-                type="number"
-                step="0.01"
-                value={formData.labor_cost === undefined ? '' : formData.labor_cost}
-                onChange={handleNumberChange}
-                placeholder="Costo de mano de obra"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="labor_cost">Costo de Mano de Obra</Label>
+                <Input
+                  id="labor_cost"
+                  name="labor_cost"
+                  type="number"
+                  step="0.01"
+                  value={formData.labor_cost === undefined ? '' : formData.labor_cost}
+                  onChange={handleNumberChange}
+                  placeholder="Costo de mano de obra"
+                />
+              </div>
             </div>
           </>
         )}

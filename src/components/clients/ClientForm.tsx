@@ -1,162 +1,185 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Client } from "@/types";
-import { useState, useEffect } from "react";
-import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
-// Zod Schema for Client Validation
-const clientSchema = z.object({
-  name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
-  phone: z.string().optional().or(z.literal('')).refine(value => !value || /^[+]?[0-9]{9,15}$/.test(value), {
-    message: "Número de teléfono inválido.",
+// ------------------------------
+// Schema & Types
+// ------------------------------
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "El nombre debe tener al menos 2 caracteres.",
   }),
-  email: z.string().optional().or(z.literal('')).email("Email inválido."),
-  address: z.string().optional(),
-  identification: z.string().optional().or(z.literal('')).refine(value => {
-    if (!value) return true; // Optional field
-    const cleaned = value.replace(/-/g, "");
-    return (cleaned.length >= 7 && cleaned.length <= 8) || cleaned.length === 11; // DNI or CUIT
-  }, {
-    message: "DNI (7-8 dígitos) o CUIT (11 dígitos) inválido.",
+  phone: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine(
+      (val) => !val || /^[+]?[0-9]{7,15}$/.test(val),
+      {
+        message: "Número de teléfono inválido.",
+      }
+    ),
+  email: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .email({ message: "Debe ser un correo electrónico válido." }),
+  address: z.string().min(5, {
+    message: "La dirección debe tener al menos 5 caracteres.",
   }),
+  identification: z
+    .string()
+    .min(5, {
+      message: "La identificación debe tener al menos 5 caracteres.",
+    })
+    .refine(
+      (val) => {
+        const cleaned = val.replace(/-/g, "");
+        return (
+          (cleaned.length >= 7 && cleaned.length <= 8) || cleaned.length === 11 // DNI (7‑8) o CUIT (11)
+        );
+      },
+      {
+        message: "DNI (7‑8 dígitos) o CUIT (11 dígitos) inválido.",
+      }
+    ),
 });
 
-type ClientFormValues = z.infer<typeof clientSchema>;
-type ClientFormErrors = z.ZodFormattedError<ClientFormValues> | null;
+type FormValues = z.infer<typeof formSchema>;
 
 interface ClientFormProps {
   initialData?: Partial<Client>;
-  onSubmit: (data: ClientFormValues) => void; // Ensure data matches schema
+  onSubmit: (data: FormValues) => void;
   onCancel: () => void;
   isSubmitting: boolean;
 }
 
-const ClientForm = ({ initialData, onSubmit, onCancel, isSubmitting }: ClientFormProps) => {
-  const [formData, setFormData] = useState<Partial<Client>>({
-    name: '',
-    phone: '',
-    email: '',
-    address: '',
-    identification: '',
-    ...initialData, // Spread initialData to overwrite defaults if provided
+// ------------------------------
+// Component
+// ------------------------------
+const ClientForm = ({
+  initialData,
+  onSubmit,
+  onCancel,
+  isSubmitting,
+}: ClientFormProps) => {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: initialData?.name ?? "",
+      phone: initialData?.phone ?? "",
+      email: initialData?.email ?? "",
+      address: initialData?.address ?? "",
+      identification: initialData?.identification ?? "",
+    },
   });
-  const [errors, setErrors] = useState<ClientFormErrors>(null);
-
-  useEffect(() => {
-    // If initialData changes, update formData. This is useful for edit forms.
-    setFormData({
-      name: initialData?.name || '',
-      phone: initialData?.phone || '',
-      email: initialData?.email || '',
-      address: initialData?.address || '',
-      identification: initialData?.identification || '',
-      ...initialData,
-    });
-    setErrors(null); // Clear errors when initialData changes
-  }, [initialData]);
-
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear errors for the field being changed
-    if (errors && errors[name as keyof ClientFormValues]) {
-      setErrors(prevErrors => {
-        if (!prevErrors) return null;
-        const newErrors = { ...prevErrors };
-        delete newErrors[name as keyof ClientFormValues];
-        return newErrors;
-      });
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors(null); // Clear previous errors
-
-    const result = clientSchema.safeParse(formData);
-
-    if (!result.success) {
-      setErrors(result.error.format());
-    } else {
-      onSubmit(result.data);
-    }
-  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Nombre *</Label>
-        <Input
-          id="name"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
           name="name"
-          value={formData.name || ''}
-          onChange={handleChange}
-          placeholder="Nombre completo"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nombre *</FormLabel>
+              <FormControl>
+                <Input placeholder="Nombre completo" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors?.name && <p className="text-red-500 text-sm">{errors.name._errors[0]}</p>}
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="phone">Teléfono</Label>
-        <Input
-          id="phone"
+
+        <FormField
+          control={form.control}
           name="phone"
-          value={formData.phone || ''}
-          onChange={handleChange}
-          placeholder="Teléfono de contacto"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Teléfono</FormLabel>
+              <FormControl>
+                <Input placeholder="Teléfono de contacto" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors?.phone && <p className="text-red-500 text-sm">{errors.phone._errors[0]}</p>}
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
+
+        <FormField
+          control={form.control}
           name="email"
-          type="email"
-          value={formData.email || ''}
-          onChange={handleChange}
-          placeholder="correo@ejemplo.com"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="correo@ejemplo.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors?.email && <p className="text-red-500 text-sm">{errors.email._errors[0]}</p>}
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="address">Dirección</Label>
-        <Input
-          id="address"
+
+        <FormField
+          control={form.control}
           name="address"
-          value={formData.address || ''}
-          onChange={handleChange}
-          placeholder="Dirección"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Dirección *</FormLabel>
+              <FormControl>
+                <Input placeholder="Dirección" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {/* No validation for address currently */}
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="identification">DNI/CUIT</Label>
-        <Input
-          id="identification"
+
+        <FormField
+          control={form.control}
           name="identification"
-          value={formData.identification || ''}
-          onChange={handleChange}
-          placeholder="Número de identificación"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>DNI/CUIT *</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Número de identificación"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors?.identification && <p className="text-red-500 text-sm">{errors.identification._errors[0]}</p>}
-      </div>
-      
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Guardando...' : initialData?.id ? 'Actualizar' : 'Crear'}
-        </Button>
-      </div>
-    </form>
+
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting
+              ? "Guardando..."
+              : initialData?.id
+              ? "Actualizar"
+              : "Crear"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
 

@@ -84,13 +84,14 @@ const InventoryForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Invent
               <FormItem>
                 <FormLabel>Proveedor</FormLabel>
                 <FormControl>
-                  <div className="flex space-x-2">
+                  <>
                     <Input {...field} placeholder="Proveedor" />
                     <ProviderSearch 
                       onSelectProvider={handleProviderSelect}
                       buttonText="Seleccionar"
+                      className="mt-2"
                     />
-                  </div>
+                  </>
                 </FormControl>
                 <FormMessage />
               </FormItem>

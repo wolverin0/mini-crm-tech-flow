@@ -23,13 +23,30 @@ const formSchema = z.object({
   type: z.enum(["persona", "company"], { 
     message: "Debe seleccionar un tipo: Persona física o Empresa" 
   }),
-  tax_id: z.string().optional(),
-  business_name: z.string().optional(),
-  contact_name: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email({ message: "Email inválido" }).optional().or(z.literal('')),
-  address: z.string().optional(),
+  tax_id: z.string().min(5, { message: "El CUIT/DNI debe tener al menos 5 caracteres" }),
+  business_name: z.string().optional(), // Stays optional here, handled by superRefine
+  contact_name: z.string().optional(), // Stays optional here, handled by superRefine
+  phone: z.string().min(7, { message: "El teléfono debe tener al menos 7 caracteres" }),
+  email: z.string().min(1, { message: "El email es requerido" }).email({ message: "Email inválido" }),
+  address: z.string().min(5, { message: "La dirección debe tener al menos 5 caracteres" }),
   notes: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.type === "company") {
+    if (!data.business_name || data.business_name.trim().length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "La Razón Social debe tener al menos 2 caracteres para empresas.",
+        path: ["business_name"],
+      });
+    }
+    if (!data.contact_name || data.contact_name.trim().length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "El Nombre de Contacto debe tener al menos 2 caracteres para empresas.",
+        path: ["contact_name"],
+      });
+    }
+  }
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -97,7 +114,7 @@ const ProviderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Provide
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre</FormLabel>
+                <FormLabel>Nombre *</FormLabel>
                 <FormControl>
                   <Input placeholder="Nombre del proveedor" {...field} />
                 </FormControl>
@@ -111,7 +128,7 @@ const ProviderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Provide
             name="tax_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>CUIT/DNI</FormLabel>
+                <FormLabel>CUIT/DNI *</FormLabel>
                 <FormControl>
                   <Input placeholder="CUIT o DNI" {...field} />
                 </FormControl>
@@ -127,7 +144,7 @@ const ProviderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Provide
             name="business_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Razón Social</FormLabel>
+                <FormLabel>Razón Social *</FormLabel>
                 <FormControl>
                   <Input placeholder="Razón social de la empresa" {...field} />
                 </FormControl>
@@ -143,7 +160,7 @@ const ProviderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Provide
             name="contact_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre de Contacto</FormLabel>
+                <FormLabel>Nombre de Contacto *</FormLabel>
                 <FormControl>
                   <Input placeholder="Persona de contacto" {...field} />
                 </FormControl>
@@ -159,7 +176,7 @@ const ProviderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Provide
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Teléfono</FormLabel>
+                <FormLabel>Teléfono *</FormLabel>
                 <FormControl>
                   <Input placeholder="Número de teléfono" {...field} />
                 </FormControl>
@@ -173,7 +190,7 @@ const ProviderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Provide
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Email *</FormLabel>
                 <FormControl>
                   <Input type="email" placeholder="Email" {...field} />
                 </FormControl>
@@ -188,7 +205,7 @@ const ProviderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: Provide
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Dirección</FormLabel>
+              <FormLabel>Dirección *</FormLabel>
               <FormControl>
                 <Input placeholder="Dirección completa" {...field} />
               </FormControl>
