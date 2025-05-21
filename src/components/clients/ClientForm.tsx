@@ -9,18 +9,17 @@ import { z } from "zod";
 // Zod Schema for Client Validation
 const clientSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
-  phone: z.string().optional().or(z.literal('')).refine(value => !value || /^[+]?[0-9]{9,15}$/.test(value), {
-    message: "Número de teléfono inválido.",
-  }),
-  email: z.string().optional().or(z.literal('')).email("Email inválido."),
+  phone: z.string().refine(value => /^[+]?[0-9]{9,15}$/.test(value), {
+    message: "Número de teléfono inválido."
+  }).optional().or(z.literal('')),
+  email: z.string().email({ message: "Email inválido." }).optional().or(z.literal('')),
   address: z.string().optional(),
-  identification: z.string().optional().or(z.literal('')).refine(value => {
-    if (!value) return true; // Optional field
+  identification: z.string().refine(value => {
     const cleaned = value.replace(/-/g, "");
     return (cleaned.length >= 7 && cleaned.length <= 8) || cleaned.length === 11; // DNI or CUIT
   }, {
-    message: "DNI (7-8 dígitos) o CUIT (11 dígitos) inválido.",
-  }),
+    message: "DNI (7-8 dígitos) o CUIT (11 dígitos) inválido."
+  }).optional().or(z.literal('')),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
