@@ -15,6 +15,7 @@ import Proveedores from "./pages/Proveedores";
 import Configuracion from "./pages/Configuracion";
 import NotFound from "./pages/NotFound";
 import ClientAccounts from "./pages/ClientAccounts";
+import Reportes from "./pages/Reportes";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +41,7 @@ const App = () => (
         <Route path="/proveedores" element={<AppLayout><Proveedores /></AppLayout>} />
         <Route path="/facturacion" element={<AppLayout><Facturacion /></AppLayout>} />
         <Route path="/cuentas" element={<AppLayout><ClientAccounts /></AppLayout>} />
+        <Route path="/reportes" element={<AppLayout><Reportes /></AppLayout>} />
         <Route path="/configuracion" element={<AppLayout><Configuracion /></AppLayout>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
