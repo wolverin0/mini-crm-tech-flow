@@ -268,7 +268,7 @@ const Tickets = () => {
                     {filteredOrders.map((order) => (
                       <div
                         key={order.id}
-                        className="grid grid-cols-12 gap-2 p-4 text-sm hover:bg-muted/50 cursor-pointer"
+                        className="grid grid-cols-12 gap-2 p-4 text-sm hover:bg-muted/50 cursor-pointer items-center"
                       >
                         <div className="col-span-1 flex items-center">
                           <Ticket className="h-4 w-4 mr-2 text-muted-foreground" />

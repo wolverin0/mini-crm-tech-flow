@@ -22,13 +22,14 @@ export const AppSidebar = ({ collapsed, toggleSidebar }: { collapsed: boolean, t
 
   const menuItems = [
     { name: "Panel de Control", path: "/dashboard", icon: Home },
+    { name: "Tickets", path: "/tickets", icon: Ticket },
     { name: "Clientes", path: "/clientes", icon: Users },
     { name: "Órdenes", path: "/ordenes", icon: Wrench },
-    { name: "Tickets", path: "/tickets", icon: Ticket },
     { name: "Inventario", path: "/inventario", icon: Package2 },
     { name: "Proveedores", path: "/proveedores", icon: Truck },
     { name: "Facturación", path: "/facturacion", icon: FileText },
     { name: "Cuentas", path: "/cuentas", icon: CreditCard },
+    { name: "Reportes", path: "/reportes", icon: FileText },
     { name: "Configuración", path: "/configuracion", icon: Settings },
   ];
 

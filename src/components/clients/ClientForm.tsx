@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Client } from "@/types";
@@ -14,12 +13,47 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+// ------------------------------
+// Schema & Types
+// ------------------------------
 const formSchema = z.object({
-  name: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
-  phone: z.string().min(7, { message: "El teléfono debe tener al menos 7 caracteres." }),
-  email: z.string().email({ message: "Debe ser un correo electrónico válido." }),
-  address: z.string().min(5, { message: "La dirección debe tener al menos 5 caracteres." }),
-  identification: z.string().min(5, { message: "La identificación debe tener al menos 5 caracteres." }),
+  name: z.string().min(2, {
+    message: "El nombre debe tener al menos 2 caracteres.",
+  }),
+  phone: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine(
+      (val) => !val || /^[+]?[0-9]{7,15}$/.test(val),
+      {
+        message: "Número de teléfono inválido.",
+      }
+    ),
+  email: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .email({ message: "Debe ser un correo electrónico válido." }),
+  address: z.string().min(5, {
+    message: "La dirección debe tener al menos 5 caracteres.",
+  }),
+  identification: z
+    .string()
+    .min(5, {
+      message: "La identificación debe tener al menos 5 caracteres.",
+    })
+    .refine(
+      (val) => {
+        const cleaned = val.replace(/-/g, "");
+        return (
+          (cleaned.length >= 7 && cleaned.length <= 8) || cleaned.length === 11 // DNI (7‑8) o CUIT (11)
+        );
+      },
+      {
+        message: "DNI (7‑8 dígitos) o CUIT (11 dígitos) inválido.",
+      }
+    ),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -31,15 +65,23 @@ interface ClientFormProps {
   isSubmitting: boolean;
 }
 
-const ClientForm = ({ initialData, onSubmit, onCancel, isSubmitting }: ClientFormProps) => {
+// ------------------------------
+// Component
+// ------------------------------
+const ClientForm = ({
+  initialData,
+  onSubmit,
+  onCancel,
+  isSubmitting,
+}: ClientFormProps) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: initialData?.name || "",
-      phone: initialData?.phone || "",
-      email: initialData?.email || "",
-      address: initialData?.address || "",
-      identification: initialData?.identification || "",
+      name: initialData?.name ?? "",
+      phone: initialData?.phone ?? "",
+      email: initialData?.email ?? "",
+      address: initialData?.address ?? "",
+      identification: initialData?.identification ?? "",
     },
   });
 
@@ -59,13 +101,13 @@ const ClientForm = ({ initialData, onSubmit, onCancel, isSubmitting }: ClientFor
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Teléfono *</FormLabel>
+              <FormLabel>Teléfono</FormLabel>
               <FormControl>
                 <Input placeholder="Teléfono de contacto" {...field} />
               </FormControl>
@@ -73,13 +115,13 @@ const ClientForm = ({ initialData, onSubmit, onCancel, isSubmitting }: ClientFor
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email *</FormLabel>
+              <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input type="email" placeholder="correo@ejemplo.com" {...field} />
               </FormControl>
@@ -87,7 +129,7 @@ const ClientForm = ({ initialData, onSubmit, onCancel, isSubmitting }: ClientFor
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="address"
@@ -101,7 +143,7 @@ const ClientForm = ({ initialData, onSubmit, onCancel, isSubmitting }: ClientFor
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="identification"
@@ -109,19 +151,31 @@ const ClientForm = ({ initialData, onSubmit, onCancel, isSubmitting }: ClientFor
             <FormItem>
               <FormLabel>DNI/CUIT *</FormLabel>
               <FormControl>
-                <Input placeholder="Número de identificación" {...field} />
+                <Input
+                  placeholder="Número de identificación"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
+
         <div className="flex justify-end space-x-2 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
             Cancelar
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Guardando...' : initialData?.id ? 'Actualizar' : 'Crear'}
+            {isSubmitting
+              ? "Guardando..."
+              : initialData?.id
+              ? "Actualizar"
+              : "Crear"}
           </Button>
         </div>
       </form>
