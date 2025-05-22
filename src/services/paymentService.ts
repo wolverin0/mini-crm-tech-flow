@@ -18,6 +18,23 @@ export const getPayments = async () => {
   }
 };
 
+export const getPaymentsByDateRange = async (startDate: string, endDate: string): Promise<Payment[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .gte('payment_date', startDate)
+      .lte('payment_date', endDate)
+      .order('payment_date', { ascending: false });
+
+    if (error) throw error;
+    return data as Payment[];
+  } catch (error: any) {
+    console.error('Error fetching payments by date range:', error);
+    return [];
+  }
+};
+
 // Function to get payments by client ID
 export const getClientPayments = async (clientId: string) => {
   try {
