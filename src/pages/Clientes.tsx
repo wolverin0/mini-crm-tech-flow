@@ -14,16 +14,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import ClientForm from "@/components/clients/ClientForm";
 import ClientDetails from "@/components/clients/ClientDetails";
+import { FullScreenCard, DetailItem } from "@/components/ui/FullScreenCard";
 import { createClient, deleteClient, getClients, updateClient } from "@/services/clientService";
 import { logAction } from "@/services/historyService";
 import { Client } from "@/types";
@@ -133,88 +126,30 @@ const Clientes = () => {
             <div className="flex justify-center py-8">
               <p>Cargando clientes...</p>
             </div>
+          ) : filteredClients.length === 0 ? (
+            <div className="flex justify-center py-8">
+              <p>No se encontraron clientes.</p>
+            </div>
           ) : (
-            <div className="rounded-md border overflow-x-auto"> {/* Added overflow-x-auto */}
-              <Table className="min-w-[600px]"> {/* Added min-width */}
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[250px]">Nombre</TableHead>
-                    <TableHead>Teléfono</TableHead>
-                    <TableHead className="hidden md:table-cell">Email</TableHead>
-                    <TableHead className="hidden lg:table-cell">Identificación</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredClients.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8">
-                        No se encontraron clientes
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredClients.map((client) => (
-                      <TableRow key={client.id}>
-                        <TableCell className="font-medium">{client.name}</TableCell>
-                        <TableCell>{client.phone || "-"}</TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {client.email || "-"}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {client.identification || "-"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            {client.phone && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openWhatsApp(client.phone)}
-                                title="Enviar mensaje por WhatsApp"
-                              >
-                                <MessageCircle className="h-4 w-4 text-green-500" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedClient(client);
-                                setIsViewDialogOpen(true);
-                              }}
-                               title="Ver detalles"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedClient(client);
-                                setIsEditDialogOpen(true);
-                              }}
-                              title="Editar cliente"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedClient(client);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                              title="Eliminar cliente"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+            <div className="space-y-4">
+              {filteredClients.map((client) => {
+                const details: DetailItem[] = [
+                  { label: "Teléfono", value: client.phone || "-" },
+                  { label: "Email", value: client.email || "-" },
+                  { label: "Identificación", value: client.identification || "-" },
+                ];
+                return (
+                  <FullScreenCard
+                    key={client.id}
+                    title={client.name}
+                    details={details}
+                    onClick={() => {
+                      setSelectedClient(client);
+                      setIsViewDialogOpen(true);
+                    }}
+                  />
+                );
+              })}
             </div>
           )}
         </CardContent>

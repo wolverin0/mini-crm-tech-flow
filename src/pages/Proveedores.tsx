@@ -9,10 +9,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Search, Plus, Loader2, Building2, User, Eye, Pencil, Trash2, MessageCircle } from "lucide-react";
 import { Provider } from "@/types";
 import { toast } from "sonner";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { logAction } from "@/services/historyService";
 import PageHeader from "@/components/layout/PageHeader";
 import ProviderForm from "@/components/providers/ProviderForm";
+import { FullScreenCard, DetailItem } from "@/components/ui/FullScreenCard";
 import ProviderDetails from "@/components/providers/ProviderDetails";
 import { 
   getProviders,
@@ -233,66 +233,32 @@ const Proveedores = () => {
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : filteredProviders.length === 0 ? (
+            <div className="mt-4 flex justify-center py-8">
+              <p>No se encontraron proveedores.</p>
+            </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Teléfono</TableHead>
-                    <TableHead className="hidden md:table-cell">Email</TableHead>
-                    <TableHead className="hidden lg:table-cell">CUIT/DNI</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProviders.length > 0 ? (
-                    filteredProviders.map((provider) => (
-                      <TableRow key={provider.id}>
-                        <TableCell>
-                          <div>{provider.name}</div>
-                          {provider.business_name && (
-                            <div className="text-xs text-muted-foreground">{provider.business_name}</div>
-                          )}
-                           <div className="text-xs text-muted-foreground flex items-center sm:hidden mt-1">
-                            {provider.type === "persona" ? (
-                              <><User className="h-3 w-3 mr-1" /> Persona</>
-                            ) : (
-                              <><Building2 className="h-3 w-3 mr-1" /> Empresa</>
-                            )}
-                            {provider.tax_id && <span className="ml-2">| CUIT/DNI: {provider.tax_id}</span>}
-                          </div>
-                        </TableCell>
-                        <TableCell>{provider.phone || "-"}</TableCell>
-                        <TableCell className="hidden md:table-cell">{provider.email || "-"}</TableCell>
-                        <TableCell className="hidden lg:table-cell">{provider.tax_id || "-"}</TableCell>
-                        <TableCell className="text-right space-x-1">
-                          {provider.phone && (
-                            <Button variant="ghost" size="icon" onClick={() => openWhatsApp(provider.phone)} title="WhatsApp">
-                              <MessageCircle className="h-4 w-4 text-green-600" />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="icon" onClick={() => handleViewProvider(provider)} title="Ver">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleEditProvider(provider)} title="Editar">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteDialog(provider)} title="Eliminar">
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center h-24">
-                        No se encontraron proveedores.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+            <div className="mt-4 space-y-4">
+              {filteredProviders.map((provider) => {
+                const details: DetailItem[] = [
+                  { label: "Razón Social", value: provider.business_name || "-" },
+                  { label: "Teléfono", value: provider.phone || "-" },
+                  { label: "Email", value: provider.email || "-" },
+                  { label: "CUIT/DNI", value: provider.tax_id || "-" },
+                  { label: "Tipo", value: provider.type === "persona" ? "Persona" : "Empresa" },
+                ];
+                return (
+                  <FullScreenCard
+                    key={provider.id}
+                    title={provider.name}
+                    details={details}
+                    onClick={() => {
+                      setSelectedProvider(provider);
+                      setIsViewDialogOpen(true);
+                    }}
+                  />
+                );
+              })}
             </div>
           )}
         </CardContent>
