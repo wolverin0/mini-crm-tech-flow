@@ -13,47 +13,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// ------------------------------
-// Schema & Types
-// ------------------------------
+// Zod Schema for Client Validation
 const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "El nombre debe tener al menos 2 caracteres.",
-  }),
-  phone: z
-    .string()
-    .optional()
-    .or(z.literal(""))
-    .refine(
-      (val) => !val || /^[+]?[0-9]{7,15}$/.test(val),
-      {
-        message: "Número de teléfono inválido.",
-      }
-    ),
-  email: z
-    .string()
-    .optional()
-    .or(z.literal(""))
-    .email({ message: "Debe ser un correo electrónico válido." }),
-  address: z.string().min(5, {
-    message: "La dirección debe tener al menos 5 caracteres.",
-  }),
-  identification: z
-    .string()
-    .min(5, {
-      message: "La identificación debe tener al menos 5 caracteres.",
-    })
-    .refine(
-      (val) => {
-        const cleaned = val.replace(/-/g, "");
-        return (
-          (cleaned.length >= 7 && cleaned.length <= 8) || cleaned.length === 11 // DNI (7‑8) o CUIT (11)
-        );
-      },
-      {
-        message: "DNI (7‑8 dígitos) o CUIT (11 dígitos) inválido.",
-      }
-    ),
+  name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
+  phone: z.string().refine(value => /^[+]?[0-9]{9,15}$/.test(value), {
+    message: "Número de teléfono inválido."
+  }).optional().or(z.literal('')),
+  email: z.string().email({ message: "Email inválido." }).optional().or(z.literal('')),
+  address: z.string().optional(),
+  identification: z.string().refine(value => {
+    const cleaned = value.replace(/-/g, "");
+    return (cleaned.length >= 7 && cleaned.length <= 8) || cleaned.length === 11; // DNI or CUIT
+  }, {
+    message: "DNI (7-8 dígitos) o CUIT (11 dígitos) inválido."
+  }).optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof formSchema>;
