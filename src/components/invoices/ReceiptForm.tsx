@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react"; // Keep existing lucide-react imports
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+// Step 1: Add RepairOrderSearch import
+import RepairOrderSearch from "../repairs/RepairOrderSearch";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -25,7 +27,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { ReceiptFormProps, Client } from "@/types";
+// Step 1: Ensure RepairOrder is imported from @/types
+import { ReceiptFormProps, Client, RepairOrder } from "@/types"; 
 import ClientSearch from "../clients/ClientSearch";
 import { useQuery } from "@tanstack/react-query";
 import { getClientById } from "@/services/clientService";
@@ -50,7 +53,8 @@ const ReceiptForm = ({
   isSubmitting,
 }: ReceiptFormProps) => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  // Step 6: Remove selectedOrder state
+  // const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   // Initialize form with default values or initial data
   const form = useForm<z.infer<typeof formSchema>>({
@@ -67,6 +71,9 @@ const ReceiptForm = ({
     },
   });
 
+  // Step 2: Track Current Client ID
+  const currentClientId = form.watch("client_id");
+
   // Fetch client and repair order data if IDs are provided
   const { data: clientData } = useQuery({
     queryKey: ["client", form.watch("client_id")],
@@ -80,24 +87,33 @@ const ReceiptForm = ({
     enabled: !!form.watch("repair_order_id"),
   });
 
-  // Update selected client and order when data is fetched
+  // Step 6: Review and Adjust useEffect for orderData
   useEffect(() => {
-    if (clientData && !selectedClient) {
+    if (clientData && !selectedClient) { // Keep existing client logic
       setSelectedClient(clientData);
     }
-    if (orderData && !selectedOrder) {
-      setSelectedOrder(orderData);
-      // If we have order data and no existing amount, update form with order costs
-      if (orderData.total_cost && form.getValues("amount") === 0) {
+    // If orderData is fetched (likely from initialData.repair_order_id)
+    // and the amount hasn't been set by user interaction or initialData.amount
+    if (orderData && form.getValues("amount") === 0 && !initialData?.amount) {
+      if (orderData.total_cost) {
         form.setValue("amount", orderData.total_cost);
       }
     }
-  }, [clientData, orderData, form, selectedClient, selectedOrder]);
+  }, [clientData, orderData, form, selectedClient, initialData]); // Added initialData to deps
 
-  // Handle client selection
-  const handleClientSelect = (client: Client) => {
+
+  // Step 4: Update handleClientSelect function
+  const handleClientSelect = (client: Client | null) => { // Allow null client
     setSelectedClient(client);
-    form.setValue("client_id", client.id);
+    form.setValue("client_id", client ? client.id : "");
+    form.setValue("repair_order_id", ""); // Clear order
+    form.setValue("amount", 0); // Clear amount
+  };
+
+  // Step 3: Implement handleRepairOrderSelect function
+  const handleRepairOrderSelect = (order: RepairOrder | null) => {
+    form.setValue("repair_order_id", order ? order.id : "");
+    form.setValue("amount", order?.total_cost || 0);
   };
 
   // Handle form submission
@@ -140,11 +156,14 @@ const ReceiptForm = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Orden de Reparación (Opcional)</FormLabel>
+              {/* Step 5: Replace repair_order_id Input with RepairOrderSearch */}
               <FormControl>
-                <Input 
-                  {...field} 
-                  placeholder="ID de la Orden de Reparación"
-                  disabled={isSubmitting} 
+                <RepairOrderSearch
+                  clientId={currentClientId}
+                  onOrderSelect={handleRepairOrderSelect}
+                  selectedOrderId={field.value || null}
+                  buttonText="Seleccionar o buscar Orden de Reparación"
+                  disabled={!currentClientId || isSubmitting} // Disable if no client selected
                 />
               </FormControl>
               <FormMessage />
