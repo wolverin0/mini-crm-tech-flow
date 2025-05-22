@@ -202,7 +202,7 @@ const Dashboard = () => {
               Lista de órdenes de reparación que requieren atención.
             </CardDescription>
           </CardHeader>
-          <CardContent className="pl-2">
+          <CardContent>
             {isLoadingOrders ? (
               <p>Cargando órdenes...</p>
             ) : totalOverdueOrders === 0 ? (
@@ -367,7 +367,7 @@ const Dashboard = () => {
               Resumen de las ventas de los últimos 7 días.
             </CardDescription>
           </CardHeader>
-          <CardContent className="pl-2">
+          <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart
                 data={recentSalesData}
