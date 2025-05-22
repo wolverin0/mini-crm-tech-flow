@@ -17,13 +17,10 @@ interface RepairOrderFormProps {
 }
 
 const STATUS_OPTIONS = [
-  "Ingresado",
-  "En diagnóstico",
-  "Esperando repuesto",
-  "Esperando aprobación",
-  "Reparado",
-  "Entregado",
-  "No reparado/Cancelado"
+  "Ingresado",        // Corresponds to "Pendientes" tab
+  "En Reparación",    // Corresponds to "En Proceso" tab
+  "Finalizado",       // Corresponds to "Finalizados" tab
+  "Cancelado"         // Common terminal state
 ];
 
 const RepairOrderForm = ({ initialData, onSubmit, onCancel, isSubmitting }: RepairOrderFormProps) => {

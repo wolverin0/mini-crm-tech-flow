@@ -29,7 +29,7 @@ const Tickets = () => {
     equipment_model: "",
     serial_number: "",
     reported_issue: "",
-    status: "Pendiente"
+    status: "Ingresado" // Changed from "Pendiente"
   });
   
   const { data: orders = [], isLoading } = useQuery({
@@ -108,7 +108,7 @@ const Tickets = () => {
       equipment_model: "",
       serial_number: "",
       reported_issue: "",
-      status: "Pendiente"
+      status: "Ingresado" // Changed from "Pendiente"
     });
     setSelectedClientId(null);
   };
@@ -268,7 +268,7 @@ const Tickets = () => {
                     {filteredOrders.map((order) => (
                       <div
                         key={order.id}
-                        className="grid grid-cols-12 gap-2 p-4 text-sm hover:bg-muted/50 cursor-pointer items-center"
+                        className="grid grid-cols-12 gap-2 p-4 text-sm hover:bg-muted/50 cursor-pointer"
                       >
                         <div className="col-span-1 flex items-center">
                           <Ticket className="h-4 w-4 mr-2 text-muted-foreground" />

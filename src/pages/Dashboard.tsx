@@ -194,6 +194,102 @@ const Dashboard = () => {
         description="Resumen general de la actividad del taller."
       />
 
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+        <DashboardCard
+          title="Órdenes de Reparación"
+          description="Órdenes de reparación pendientes."
+          value={isLoadingOrders ? "Cargando..." : totalOverdueOrders}
+          icon={<Wrench className="h-4 w-4 text-gray-500" />}
+          badgeColor={totalOverdueOrders > 5 ? "bg-red-500" : "bg-green-500"}
+          navigateTo="/ordenes"
+        />
+        <DashboardCard
+          title="Clientes"
+          description="Total de clientes registrados."
+          value={isLoadingBalances ? "Cargando..." : totalClientBalances}
+          icon={<Users className="h-4 w-4 text-gray-500" />}
+          badgeColor="bg-blue-500"
+          navigateTo="/clientes"
+        />
+        <DashboardCard
+          title="Facturas Pendientes"
+          description="Facturas que requieren atención."
+          value={isLoadingBalances ? "Cargando..." : totalPendingInvoices}
+          icon={<FileText className="h-4 w-4 text-gray-500" />}
+          badgeColor="bg-yellow-500"
+          navigateTo="/facturacion"
+        />
+        <DashboardCard
+          title="Ingresos Mensuales"
+          description="Ingresos totales del mes actual."
+          value={isLoadingBalances ? "Cargando..." : `$${totalMonthlyRevenue.toLocaleString()}`}
+          icon={<CreditCard className="h-4 w-4 text-gray-500" />}
+          badgeColor="bg-green-500"
+          navigateTo="/cuentas"
+        />
+      </div>
+
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ventas Recientes</CardTitle>
+            <CardDescription>
+              Resumen de las ventas de los últimos 7 días.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pl-2">
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart
+                data={recentSalesData}
+                margin={{
+                  top: 10,
+                  right: 30,
+                  left: 0,
+                  bottom: 0,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" tickFormatter={(date) => format(new Date(date), 'dd MMM', { locale: es })} />
+                <YAxis />
+                <Tooltip formatter={(value) => [`$${value}`, 'Ventas']} />
+                <Area type="monotone" dataKey="sales" stroke="#8884d8" fill="#8884d8" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Órdenes por Estado</CardTitle>
+            <CardDescription>
+              Distribución de órdenes según su estado actual.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={statusDistribution}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {statusDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Legend />
+                <Tooltip formatter={(value) => [value, 'Cantidad']} />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -323,103 +419,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-      
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        <DashboardCard
-          title="Órdenes de Reparación"
-          description="Órdenes de reparación pendientes."
-          value={isLoadingOrders ? "Cargando..." : totalOverdueOrders}
-          icon={<Wrench className="h-4 w-4 text-gray-500" />}
-          badgeColor={totalOverdueOrders > 5 ? "bg-red-500" : "bg-green-500"}
-          navigateTo="/ordenes"
-        />
-        <DashboardCard
-          title="Clientes"
-          description="Total de clientes registrados."
-          value={isLoadingBalances ? "Cargando..." : totalClientBalances}
-          icon={<Users className="h-4 w-4 text-gray-500" />}
-          badgeColor="bg-blue-500"
-          navigateTo="/clientes"
-        />
-        <DashboardCard
-          title="Facturas Pendientes"
-          description="Facturas que requieren atención."
-          value={isLoadingBalances ? "Cargando..." : totalPendingInvoices}
-          icon={<FileText className="h-4 w-4 text-gray-500" />}
-          badgeColor="bg-yellow-500"
-          navigateTo="/facturacion"
-        />
-        <DashboardCard
-          title="Ingresos Mensuales"
-          description="Ingresos totales del mes actual."
-          value={isLoadingBalances ? "Cargando..." : `$${totalMonthlyRevenue.toLocaleString()}`}
-          icon={<CreditCard className="h-4 w-4 text-gray-500" />}
-          badgeColor="bg-green-500"
-          navigateTo="/cuentas"
-        />
-      </div>
-
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Ventas Recientes</CardTitle>
-            <CardDescription>
-              Resumen de las ventas de los últimos 7 días.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart
-                data={recentSalesData}
-                margin={{
-                  top: 10,
-                  right: 30,
-                  left: 0,
-                  bottom: 0,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tickFormatter={(date) => format(new Date(date), 'dd MMM', { locale: es })} />
-                <YAxis />
-                <Tooltip formatter={(value) => [`$${value}`, 'Ventas']} />
-                <Area type="monotone" dataKey="sales" stroke="#8884d8" fill="#8884d8" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Órdenes por Estado</CardTitle>
-            <CardDescription>
-              Distribución de órdenes según su estado actual.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={statusDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {statusDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Legend />
-                <Tooltip formatter={(value) => [value, 'Cantidad']} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
     </div>
   );
 };
