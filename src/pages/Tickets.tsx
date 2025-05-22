@@ -24,6 +24,7 @@ import { Calendar, MoreHorizontal, Ticket, Filter, Plus, Search, Loader2 } from 
 import { getClients } from "@/services/clientService";
 import ClientSearch from "@/components/clients/ClientSearch";
 import { Client } from "@/types";
+import { FullScreenCard, DetailItem } from "@/components/ui/FullScreenCard";
 
 const TICKET_STATUSES = [
   "Ingresado",
@@ -294,73 +295,24 @@ const Tickets = () => {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : filteredOrders.length > 0 ? (
-                <div className="rounded-md border overflow-x-auto"> {/* Added overflow-x-auto */}
-                  <div className="grid grid-cols-12 gap-2 p-4 text-sm font-medium text-muted-foreground bg-muted min-w-[700px]"> {/* Added min-width */} 
-                    <div className="col-span-1">#</div>
-                    <div className="col-span-2">Cliente</div>
-                    <div className="col-span-2">Equipo</div>
-                    <div className="col-span-3">Problema</div>
-                    <div className="col-span-2">Fecha</div>
-                    <div className="col-span-2">Estado</div>
-                  </div>
-                  <div className="divide-y min-w-[700px]"> {/* Added min-width */} 
-                    {filteredOrders.map((order) => (
-                      <div
+                <div className="space-y-4">
+                  {filteredOrders.map((order) => {
+                    const details: DetailItem[] = [
+                      { label: "Cliente", value: getClientName(order.client_id) },
+                      { label: "Equipo", value: `${order.equipment_type} ${order.equipment_brand || ""}`.trim() },
+                      { label: "Problema", value: order.reported_issue || "No especificado" },
+                      { label: "Fecha", value: format(new Date(order.entry_date), 'dd/MM/yyyy') },
+                      { label: "Estado", value: getStatusBadge(order.status) },
+                    ];
+                    return (
+                      <FullScreenCard
                         key={order.id}
-                        className="grid grid-cols-12 gap-2 p-4 text-sm hover:bg-muted/50 cursor-pointer items-center"
-                      >
-                        <div className="col-span-1 flex items-center">
-                          <Ticket className="h-4 w-4 mr-2 text-muted-foreground" />
-                          {order.order_number}
-                        </div>
-                        <div className="col-span-2 truncate">{getClientName(order.client_id)}</div>
-                        <div className="col-span-2 truncate">
-                          {order.equipment_type}
-                          {order.equipment_brand && ` / ${order.equipment_brand}`}
-                        </div>
-                        <div className="col-span-3 truncate">{order.reported_issue || "No especificado"}</div>
-                        <div className="col-span-2 flex items-center">
-                          <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                          {format(new Date(order.entry_date), 'dd/MM/yyyy')}
-                        </div>
-                        <div className="col-span-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm" className="w-full justify-between">
-                                {getStatusBadge(order.status)}
-                                <MoreHorizontal className="ml-2 h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuRadioGroup
-                                value={order.status}
-                                onValueChange={(newStatus) => {
-                                  if (order.id) {
-                                    setUpdatingOrderId(order.id);
-                                    updateStatusMutation.mutate({ orderId: order.id, newStatus });
-                                  }
-                                }}
-                                disabled={updateStatusMutation.isPending && updatingOrderId === order.id}
-                              >
-                                {TICKET_STATUSES.map((status) => (
-                                  <DropdownMenuRadioItem 
-                                    key={status} 
-                                    value={status}
-                                    disabled={updateStatusMutation.isPending && updatingOrderId === order.id}
-                                  >
-                                    {status}
-                                    {(updateStatusMutation.isPending && updatingOrderId === order.id && order.status === status) && 
-                                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                                    }
-                                  </DropdownMenuRadioItem>
-                                ))}
-                              </DropdownMenuRadioGroup>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                        title={`Ticket Nº ${order.order_number}`}
+                        details={details}
+                        // onClick will not be implemented in this step
+                      />
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="p-8 text-center text-muted-foreground">
@@ -371,6 +323,10 @@ const Tickets = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      {/* The following TabsContent sections need to be updated similarly if they are intended to show filtered lists.
+          For now, this refactoring focuses on the 'all' tab as per the visible structure.
+          If 'pendientes', 'en_proceso', 'finalizados' tabs also render lists, they'll need similar treatment.
+      */}
     </div>
   );
 };

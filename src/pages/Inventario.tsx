@@ -15,10 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Plus, Search, Trash } from "lucide-react";
 import { toast } from "sonner";
-import InventoryTable from "@/components/inventory/InventoryTable";
 import InventoryForm from "@/components/inventory/InventoryForm";
 import InventoryDetails from "@/components/inventory/InventoryDetails";
 import StockAdjustmentForm from "@/components/inventory/StockAdjustmentForm";
+import { FullScreenCard, DetailItem } from "@/components/ui/FullScreenCard";
 import { 
   getItems, 
   createItem, 
@@ -175,14 +175,33 @@ const Inventario = () => {
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="mt-4 flex justify-center py-8">
+              <p>No se encontraron productos.</p>
+            </div>
           ) : (
-            <InventoryTable
-              items={filteredItems}
-              onView={(item) => {
-                setSelectedItem(item);
-                setIsDetailsDialogOpen(true);
-              }}
-            />
+            <div className="mt-4 space-y-4">
+              {filteredItems.map((item) => {
+                const details: DetailItem[] = [
+                  { label: "SKU", value: item.sku || "-" },
+                  { label: "Stock", value: item.quantity ?? 0 },
+                  { label: "Precio", value: item.price ? `$${item.price.toFixed(2)}` : "-" },
+                  { label: "Categoría", value: item.category_name || "-" },
+                  { label: "Código de Barras", value: item.barcode || "-" },
+                ];
+                return (
+                  <FullScreenCard
+                    key={item.id}
+                    title={item.name}
+                    details={details}
+                    onClick={() => {
+                      setSelectedItem(item);
+                      setIsDetailsDialogOpen(true);
+                    }}
+                  />
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>

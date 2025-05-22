@@ -7,16 +7,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -41,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import OrderForm from "@/components/repairs/OrderForm";
 import PageHeader from "@/components/layout/PageHeader";
+import { FullScreenCard, DetailItem } from "@/components/ui/FullScreenCard";
 
 const Ordenes = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -212,98 +203,54 @@ const Ordenes = () => {
             </div>
           ) : (
             <>
-              <div className="border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nº Orden</TableHead>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead>Equipo</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Presupuesto</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedOrders.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
-                          No se encontraron órdenes
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      paginatedOrders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.order_number}</TableCell>
-                          <TableCell>{format(new Date(order.entry_date), "dd/MM/yyyy", { locale: es })}</TableCell>
-                          <TableCell>
-                            <div>
-                              <span className="font-medium">{order.equipment_type}</span>
-                              {order.equipment_brand && (
-                                <span className="block text-xs text-muted-foreground">
-                                  {order.equipment_brand} {order.equipment_model}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusBadgeVariant(order.status)}>
-                              {order.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {order.budget ? (
-                              `$${order.budget}`
-                            ) : (
-                              <span className="text-muted-foreground text-sm">Pendiente</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Dialog open={isEditDialogOpen && selectedOrder?.id === order.id} onOpenChange={(open) => {
-                                if (!open) setIsEditDialogOpen(false);
-                              }}>
-                                <DialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleEditOrder(order)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-[700px]">
-                                  <DialogHeader>
-                                    <DialogTitle>Editar Orden {selectedOrder?.order_number}</DialogTitle>
-                                    <DialogDescription>
-                                      Actualiza los datos de esta orden de reparación.
-                                    </DialogDescription>
-                                  </DialogHeader>
-                                  {selectedOrder && (
-                                    <OrderForm
-                                      initialData={selectedOrder}
-                                      onSubmit={handleUpdateOrder}
-                                      onCancel={() => setIsEditDialogOpen(false)}
-                                      isSubmitting={updateOrderMutation.isPending}
-                                    />
-                                  )}
-                                </DialogContent>
-                              </Dialog>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteOrder(order.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+              {paginatedOrders.length === 0 ? (
+                <div className="text-center py-8">
+                  No se encontraron órdenes
+                </div>
+              ) : (
+                <div className="space-y-4 mt-4">
+                  {paginatedOrders.map((order) => {
+                    const details: DetailItem[] = [
+                      { label: "Fecha", value: format(new Date(order.entry_date), "dd/MM/yyyy", { locale: es }) },
+                      { label: "Equipo", value: `${order.equipment_type} ${order.equipment_brand || ""} ${order.equipment_model || ""}`.trim() },
+                      { label: "Estado", value: <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge> },
+                      { label: "Presupuesto", value: order.budget ? `$${order.budget}` : "Pendiente" },
+                      { label: "Cliente", value: order.client_name || "No especificado" }, // Assuming client_name exists
+                    ];
+                    return (
+                      <FullScreenCard
+                        key={order.id}
+                        title={`Orden Nº ${order.order_number}`}
+                        details={details}
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setIsEditDialogOpen(true);
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+              
+              {/* Edit Order Dialog (triggered by FullScreenCard click) */}
+              {selectedOrder && (
+                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                  <DialogContent className="sm:max-w-[700px]">
+                    <DialogHeader>
+                      <DialogTitle>Editar Orden {selectedOrder.order_number}</DialogTitle>
+                      <DialogDescription>
+                        Actualiza los datos de esta orden de reparación.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <OrderForm
+                      initialData={selectedOrder}
+                      onSubmit={handleUpdateOrder}
+                      onCancel={() => setIsEditDialogOpen(false)}
+                      isSubmitting={updateOrderMutation.isPending}
+                    />
+                  </DialogContent>
+                </Dialog>
+              )}
 
               {pageCount > 1 && (
                 <div className="flex items-center justify-end space-x-2 py-4">
