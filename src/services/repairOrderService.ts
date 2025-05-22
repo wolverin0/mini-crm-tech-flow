@@ -137,3 +137,20 @@ export const deleteRepairOrder = async (id: string) => {
 
 // Alias for backward compatibility
 export const fetchOrders = getRepairOrders;
+
+export const getRepairOrdersByDateRange = async (startDate: string, endDate: string): Promise<RepairOrder[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('repair_orders')
+      .select('*')
+      .gte('entry_date', startDate)
+      .lte('entry_date', endDate)
+      .order('entry_date', { ascending: false });
+
+    if (error) throw error;
+    return data as RepairOrder[];
+  } catch (error: any) {
+    console.error('Error fetching repair orders by date range:', error);
+    return [];
+  }
+};
