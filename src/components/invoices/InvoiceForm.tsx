@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { CalendarIcon, Trash } from "lucide-react"; // Added Trash icon
+import { CalendarIcon, Trash } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
 import {
   Form,
   FormControl,
@@ -114,8 +115,10 @@ const InvoiceForm = ({ // Will be renamed to DocumentForm
   useEffect(() => {
     if (clientData) {
       setSelectedClient(clientData);
+    } else if (!currentClientId) { 
+      setSelectedClient(null);    
     }
-  }, [clientData]);
+  }, [clientData, currentClientId]); 
 
   // Effect to update form fields when orderData is fetched (e.g., on initial load with initialData)
   useEffect(() => {
@@ -190,20 +193,39 @@ const InvoiceForm = ({ // Will be renamed to DocumentForm
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         {/* Client Selection */}
-        <div className="mb-4">
+        <div className="mb-4 space-y-2"> {/* Added space-y-2 for better layout with checkbox */}
           <FormLabel>{clientLabel}</FormLabel>
+          
+          {(documentTypeToCreate === 'recibo' || documentTypeToCreate === 'presupuesto') && (
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="consumidorFinalCheckbox"
+                checked={!currentClientId} 
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    form.setValue("client_id", ""); 
+                    // setSelectedClient(null); // This will be handled by the useEffect watching currentClientId
+                  }
+                  // Unchecking allows manual selection via ClientSearch, no specific action needed here
+                }}
+              />
+              <Label htmlFor="consumidorFinalCheckbox" className="text-sm font-medium">
+                Emitir como Consumidor Final
+              </Label>
+            </div>
+          )}
+
           <ClientSearch
             onClientSelect={handleClientSelect}
             selectedClientId={currentClientId}
             buttonText="Seleccionar Cliente"
-            disabled={isSubmitting}
+            disabled={isSubmitting || (!currentClientId && (documentTypeToCreate === 'recibo' || documentTypeToCreate === 'presupuesto'))}
           />
-          {form.formState.errors.client_id && (
-             (documentTypeToCreate === 'factura_a' || documentTypeToCreate === 'factura_b' || documentTypeToCreate === 'factura_c') && (
-                <p className="text-sm font-medium text-destructive mt-1">
-                  {form.formState.errors.client_id.message}
-                </p>
-             )
+          {form.formState.errors.client_id && 
+            (documentTypeToCreate === 'factura_a' || documentTypeToCreate === 'factura_b' || documentTypeToCreate === 'factura_c') && (
+              <p className="text-sm font-medium text-destructive mt-1">
+                {form.formState.errors.client_id.message}
+              </p>
           )}
         </div>
 
