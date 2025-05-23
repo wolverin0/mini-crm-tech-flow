@@ -15,9 +15,10 @@ interface InvoiceCardProps {
   onAfipGenerate?: (invoiceId: string) => Promise<void>;
   onPrint?: (invoiceId: string) => void;
   onSendEmail?: (invoiceId: string) => Promise<void>;
+  onConvertToFactura?: (invoice: Invoice) => void; // New prop
 }
 
-const InvoiceCard = ({ invoice, onView, onAfipGenerate, onPrint, onSendEmail }: InvoiceCardProps) => {
+const InvoiceCard = ({ invoice, onView, onAfipGenerate, onPrint, onSendEmail, onConvertToFactura }: InvoiceCardProps) => {
   // Fetch client info
   const { data: client } = useQuery<Client>({
     queryKey: ["client", invoice.client_id],
@@ -124,6 +125,17 @@ const InvoiceCard = ({ invoice, onView, onAfipGenerate, onPrint, onSendEmail }: 
             onClick={() => onSendEmail(invoice.id)}
           >
             <Mail className="h-4 w-4 mr-1" /> Enviar
+          </Button>
+        )}
+
+        {invoice.doc_type === 'presupuesto' && onConvertToFactura && (
+          <Button 
+            size="sm" 
+            variant="default" // Or "outline" or "secondary" depending on desired emphasis
+            onClick={() => onConvertToFactura(invoice)}
+            className="bg-orange-500 hover:bg-orange-600 text-white" // Example styling
+          >
+            <FileText className="h-4 w-4 mr-1" /> Convertir a Factura
           </Button>
         )}
       </CardFooter>

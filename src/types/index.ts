@@ -99,13 +99,15 @@ export interface Invoice {
   afip_status?: string | null;
   afip_cae?: string | null;
   afip_expiration?: string | null;
-  afip_doc_type?: string | null;
+  afip_doc_type?: string | null; // This seems like an AFIP specific doc_type, might be different from the new one
+  doc_type: string; // New field for 'factura_a', 'factura_b', 'presupuesto', etc.
+  client_id?: string | null; 
 }
 
 export interface Receipt {
   id: string;
   receipt_number: string;
-  client_id: string;
+  client_id?: string | null;
   issue_date: string;
   amount: number;
   status: string;
@@ -202,9 +204,10 @@ export interface InvoiceFormProps {
   initialData?: Partial<Invoice>;
   clientId?: string | null;
   repairOrderId?: string | null;
-  onSubmit: (data: Partial<Invoice>) => Promise<any>;
+  onSubmit: (data: Partial<Invoice>) => Promise<any>; // This will become Partial<Document> conceptually
   onCancel: () => void;
   isSubmitting: boolean;
+  documentTypeToCreate: 'factura_a' | 'factura_b' | 'factura_c' | 'recibo' | 'presupuesto'; // Added new prop
 }
 
 export interface ReceiptFormProps {

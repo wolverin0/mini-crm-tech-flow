@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { CalendarIcon, Trash } from "lucide-react"; // Added Trash icon
+import { CalendarIcon, Trash } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label"; // Added Label import
 import {
   Form,
   FormControl,
@@ -33,7 +35,8 @@ import { getOrderById } from "@/services/repairOrderService";
 
 // Validation schema
 const formSchema = z.object({
-  client_id: z.string().min(1, "Cliente es requerido"),
+  doc_type: z.string(), // Added doc_type
+  client_id: z.string().optional(), // Made client_id optional
   // repair_order_id is now populated via selection, schema updated to reflect this
   repair_order_id: z.union([z.literal(''), z.string().uuid("Formato de UUID inválido")]).optional(),
   issue_date: z.date(),
@@ -45,14 +48,20 @@ const formSchema = z.object({
   afip_doc_type: z.string().optional(),
 });
 
-const InvoiceForm = ({
+// This will become DocumentFormProps conceptually
+interface DocumentFormProps extends InvoiceFormProps { 
+  documentTypeToCreate: 'factura_a' | 'factura_b' | 'factura_c' | 'recibo' | 'presupuesto';
+}
+
+const InvoiceForm = ({ // Will be renamed to DocumentForm
   initialData,
   clientId,
   repairOrderId,
   onSubmit,
   onCancel,
   isSubmitting,
-}: InvoiceFormProps) => {
+  documentTypeToCreate, // Added new prop
+}: DocumentFormProps) => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   // selectedOrder state is now managed by the form's repair_order_id and fetched via useQuery
   // const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -62,6 +71,7 @@ const InvoiceForm = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      doc_type: documentTypeToCreate, // Set doc_type from prop
       client_id: initialData?.client_id || clientId || "",
       repair_order_id: initialData?.repair_order_id || repairOrderId || "",
       issue_date: initialData?.issue_date
@@ -72,7 +82,7 @@ const InvoiceForm = ({
       total: initialData?.total || 0,
       status: initialData?.status || "Pendiente",
       notes: initialData?.notes || "",
-      afip_doc_type: initialData?.afip_doc_type || "B",
+      afip_doc_type: initialData?.afip_doc_type || (documentTypeToCreate === 'factura_a' || documentTypeToCreate === 'factura_b' || documentTypeToCreate === 'factura_c' ? "B" : ""), // Default AFIP type for facturas
     },
   });
 
@@ -106,8 +116,10 @@ const InvoiceForm = ({
   useEffect(() => {
     if (clientData) {
       setSelectedClient(clientData);
+    } else if (!currentClientId) { 
+      setSelectedClient(null);    
     }
-  }, [clientData]);
+  }, [clientData, currentClientId]); 
 
   // Effect to update form fields when orderData is fetched (e.g., on initial load with initialData)
   useEffect(() => {
@@ -145,41 +157,76 @@ const InvoiceForm = ({
   // Handle form submission
   const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Prepare data for submission, converting empty string repair_order_id to null
+      const isFactura = documentTypeToCreate === 'factura_a' || documentTypeToCreate === 'factura_b' || documentTypeToCreate === 'factura_c';
+      if (isFactura && !values.client_id) {
+        form.setError("client_id", { type: "manual", message: "Cliente es requerido para facturas." });
+        return;
+      }
+
       const formData = {
         ...values,
+        doc_type: documentTypeToCreate, // Ensure doc_type is explicitly set from the prop
         issue_date: values.issue_date.toISOString(),
-        repair_order_id: values.repair_order_id === '' ? null : values.repair_order_id, // Ensure null for empty string
+        repair_order_id: values.repair_order_id === '' ? null : values.repair_order_id,
+        client_id: values.client_id === '' ? null : values.client_id, // Handle optional client_id
+        afip_doc_type: isFactura ? values.afip_doc_type : null, // Set afip_doc_type to null if not a factura
       };
 
-      await onSubmit(formData as any); // Cast to any temporarily if type mismatch
+      await onSubmit(formData as any);
     } catch (error: any) {
-      toast.error(`Error al guardar factura: ${error.message}`);
+      toast.error(`Error al guardar el documento: ${error.message}`);
     }
   };
 
-  const documentTypes = [
+  const afipDocumentTypes = [
+    { value: "B", label: "Factura B" }, // Default often B
     { value: "A", label: "Factura A" },
-    { value: "B", label: "Factura B" },
     { value: "C", label: "Factura C" },
+    // Add other AFIP types if necessary, e.g., Nota de Crédito, etc.
   ];
+  
+  const clientLabel = 
+    documentTypeToCreate === 'recibo' || documentTypeToCreate === 'presupuesto' 
+    ? "Cliente (Opcional)" 
+    : "Cliente *";
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         {/* Client Selection */}
-        <div className="mb-4">
-          <FormLabel>Cliente *</FormLabel>
+        <div className="mb-4 space-y-2"> {/* Added space-y-2 for better layout with checkbox */}
+          <FormLabel>{clientLabel}</FormLabel>
+          
+          {(documentTypeToCreate === 'recibo' || documentTypeToCreate === 'presupuesto') && (
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="consumidorFinalCheckbox"
+                checked={!currentClientId} 
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    form.setValue("client_id", ""); 
+                    // setSelectedClient(null); // This will be handled by the useEffect watching currentClientId
+                  }
+                  // Unchecking allows manual selection via ClientSearch, no specific action needed here
+                }}
+              />
+              <Label htmlFor="consumidorFinalCheckbox" className="text-sm font-medium">
+                Emitir como Consumidor Final
+              </Label>
+            </div>
+          )}
+
           <ClientSearch
             onClientSelect={handleClientSelect}
             selectedClientId={currentClientId}
             buttonText="Seleccionar Cliente"
-            disabled={isSubmitting}
+            disabled={isSubmitting || (!currentClientId && (documentTypeToCreate === 'recibo' || documentTypeToCreate === 'presupuesto'))}
           />
-          {form.formState.errors.client_id && (
-            <p className="text-sm font-medium text-destructive mt-1">
-              {form.formState.errors.client_id.message}
-            </p>
+          {form.formState.errors.client_id && 
+            (documentTypeToCreate === 'factura_a' || documentTypeToCreate === 'factura_b' || documentTypeToCreate === 'factura_c') && (
+              <p className="text-sm font-medium text-destructive mt-1">
+                {form.formState.errors.client_id.message}
+              </p>
           )}
         </div>
 
@@ -246,30 +293,32 @@ const InvoiceForm = ({
           )}
         />
 
-        {/* AFIP Document Type */}
-        <FormField
-          control={form.control}
-          name="afip_doc_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tipo de Documento AFIP</FormLabel>
-              <FormControl>
-                <select
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
-                  {...field}
-                  disabled={isSubmitting}
-                >
-                  {documentTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* AFIP Document Type - Conditional Rendering */}
+        {(documentTypeToCreate === 'factura_a' || documentTypeToCreate === 'factura_b' || documentTypeToCreate === 'factura_c') && (
+          <FormField
+            control={form.control}
+            name="afip_doc_type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo de Documento AFIP</FormLabel>
+                <FormControl>
+                  <select
+                    className="w-full rounded-md border border-input bg-background px-3 py-2"
+                    {...field}
+                    disabled={isSubmitting}
+                  >
+                    {afipDocumentTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         {/* Subtotal */}
         <FormField
